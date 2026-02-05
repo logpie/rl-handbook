@@ -33,7 +33,7 @@ pip install torch transformers peft bitsandbytes accelerate
 ```python
 from ch02_rollouts.sample import load_model_qlora, sample_batch
 
-model, tokenizer = load_model_qlora("Qwen/Qwen3-8B-Instruct")
+model, tokenizer = load_model_qlora("Qwen/Qwen3-8B")
 responses = sample_batch(model, tokenizer, "What is 15 * 23?", n=4)
 ```
 

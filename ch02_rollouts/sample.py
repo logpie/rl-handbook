@@ -4,7 +4,7 @@ from peft import LoraConfig, get_peft_model
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 
-def load_model_qlora(model_name: str = "Qwen/Qwen3-8B-Instruct"):
+def load_model_qlora(model_name: str = "Qwen/Qwen3-8B"):
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type="nf4",
