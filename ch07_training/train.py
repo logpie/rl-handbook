@@ -1,5 +1,6 @@
 """Full GRPO training loop for reasoning on RTX 3090."""
 import argparse
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -36,9 +37,15 @@ def train(
     print(f"Thinking reward: {use_thinking_reward}")
     print()
 
+    git_branch = subprocess.run(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+        capture_output=True, text=True,
+    ).stdout.strip() or "unknown"
+
     wandb.init(project=wandb_project, config={
         "num_steps": num_steps, "G": G, "lr": lr,
         "use_thinking_reward": use_thinking_reward,
+        "git_branch": git_branch,
     })
 
     model, tokenizer = load_model_qlora()
