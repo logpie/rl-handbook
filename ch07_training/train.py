@@ -24,6 +24,11 @@ def extract_gsm8k_answer(answer_text: str) -> str:
             return line.split("####")[-1].strip()
     return lines[-1].strip() if lines else ""
 
+def _truncate_middle(text: str, head: int = 160, tail: int = 200) -> str:
+    if len(text) <= head + tail + 5:
+        return text
+    return f"{text[:head]} ... {text[-tail:]}"
+
 def train(
     num_steps: int = 50,
     G: int = 4,
@@ -31,6 +36,7 @@ def train(
     use_thinking_reward: bool = False,
     log_interval: int = 5,
     wandb_project: str = "rl-handbook",
+    model_name: str = "Qwen/Qwen3-8B",
 ):
     print("=== GRPO Training on RTX 3090 ===")
     print(f"Steps: {num_steps}, G: {G}, LR: {lr}")
@@ -48,7 +54,7 @@ def train(
         "git_branch": git_branch,
     })
 
-    model, tokenizer = load_model_qlora()
+    model, tokenizer = load_model_qlora(model_name=model_name)
     optimizer = AdamW(model.parameters(), lr=lr)
 
     dataset = load_dataset("openai/gsm8k", "main", split="train")
@@ -91,8 +97,8 @@ def train(
                 "perf/steps_per_sec": (step + 1) / elapsed,
             }, step=step)
             print(f"\nStep {step+1}: loss={avg_loss:.4f}, reward={avg_reward:.4f}, time={elapsed:.1f}s")
-            print(f"  Prompt: {prompt[:60]}...")
-            print(f"  Response: {responses[0][:100]}...")
+            print(f"  Prompt: {_truncate_middle(prompt)}")
+            print(f"  Response: {_truncate_middle(responses[0])}")
 
         torch.cuda.empty_cache()
 
@@ -116,6 +122,12 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=1e-5)
     parser.add_argument("--thinking", action="store_true")
     parser.add_argument("--wandb-project", type=str, default="rl-handbook")
+    parser.add_argument(
+        "--model-name",
+        type=str,
+        default="Qwen/Qwen3-8B",
+        help="Base model to load (e.g., Qwen/Qwen3-8B or alexchen4ai/Qwen3-8B-Instruct)",
+    )
     args = parser.parse_args()
 
     train(
@@ -124,4 +136,5 @@ if __name__ == "__main__":
         lr=args.lr,
         use_thinking_reward=args.thinking,
         wandb_project=args.wandb_project,
+        model_name=args.model_name,
     )
