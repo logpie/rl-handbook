@@ -27,3 +27,5 @@ venv/
 *.swp
 *.swo
 .DS_Store
+runs/
+wandb/

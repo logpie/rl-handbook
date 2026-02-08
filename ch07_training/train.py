@@ -7,6 +7,7 @@ from pathlib import Path
 import torch
 from datasets import load_dataset
 from torch.optim import AdamW
+import wandb
 from tqdm import tqdm
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -28,11 +29,17 @@ def train(
     lr: float = 1e-5,
     use_thinking_reward: bool = False,
     log_interval: int = 5,
+    wandb_project: str = "rl-handbook",
 ):
     print("=== GRPO Training on RTX 3090 ===")
     print(f"Steps: {num_steps}, G: {G}, LR: {lr}")
     print(f"Thinking reward: {use_thinking_reward}")
     print()
+
+    wandb.init(project=wandb_project, config={
+        "num_steps": num_steps, "G": G, "lr": lr,
+        "use_thinking_reward": use_thinking_reward,
+    })
 
     model, tokenizer = load_model_qlora()
     optimizer = AdamW(model.parameters(), lr=lr)
@@ -60,10 +67,18 @@ def train(
         losses.append(loss)
         rewards.append(reward)
 
+        wandb.log({"train/loss": loss, "train/reward": reward}, step=step)
+
         if (step + 1) % log_interval == 0:
             avg_loss = sum(losses[-log_interval:]) / log_interval
             avg_reward = sum(rewards[-log_interval:]) / log_interval
             elapsed = time.time() - start_time
+            wandb.log({
+                "train/avg_loss": avg_loss,
+                "train/avg_reward": avg_reward,
+                "perf/gpu_mem_gb": torch.cuda.max_memory_allocated() / 1e9,
+                "perf/steps_per_sec": (step + 1) / elapsed,
+            }, step=step)
             print(f"\nStep {step+1}: loss={avg_loss:.4f}, reward={avg_reward:.4f}, time={elapsed:.1f}s")
             print(f"  Prompt: {prompt[:60]}...")
             print(f"  Response: {responses[0][:100]}...")
@@ -79,6 +94,8 @@ def train(
     mem = torch.cuda.max_memory_allocated() / 1e9
     print(f"Peak GPU memory: {mem:.2f} GB")
 
+    wandb.finish()
+
     return model, losses, rewards
 
 if __name__ == "__main__":
@@ -87,6 +104,7 @@ if __name__ == "__main__":
     parser.add_argument("--G", type=int, default=4)
     parser.add_argument("--lr", type=float, default=1e-5)
     parser.add_argument("--thinking", action="store_true")
+    parser.add_argument("--wandb-project", type=str, default="rl-handbook")
     args = parser.parse_args()
 
     train(
@@ -94,4 +112,5 @@ if __name__ == "__main__":
         G=args.G,
         lr=args.lr,
         use_thinking_reward=args.thinking,
+        wandb_project=args.wandb_project,
     )
