@@ -10,8 +10,7 @@ def compute_log_probs(model, tokenizer, prompt: str, response: str) -> torch.Ten
     inputs = tokenizer(full_text, return_tensors="pt").to(model.device)
     prompt_len = len(tokenizer(prompt, return_tensors="pt").input_ids[0])
 
-    with torch.no_grad():
-        outputs = model(**inputs)
+    outputs = model(**inputs)
 
     logits = outputs.logits[0, prompt_len-1:-1]
     target_ids = inputs.input_ids[0, prompt_len:]

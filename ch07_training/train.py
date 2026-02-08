@@ -55,7 +55,11 @@ def train(
 
     for step in tqdm(range(num_steps), desc="Training"):
         example = dataset[step % len(dataset)]
-        prompt = example["question"]
+        prompt = (
+            f"{example['question']}\n\n"
+            "Give your final answer as: #### <number>\n"
+            "Only put the number after #### on the last line."
+        )
         ground_truth = extract_gsm8k_answer(example["answer"])
 
         optimizer.zero_grad()

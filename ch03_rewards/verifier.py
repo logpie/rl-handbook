@@ -6,15 +6,16 @@ from collections.abc import Callable
 
 def extract_answer(response: str) -> str | None:
     patterns = [
+        r"####\s*(-?\d{1,3}(?:,\d{3})*(?:\.\d+)?|-?\d+(?:\.\d+)?)",
         r"(?:answer|result|equals?|is)[:\s]+(-?\d+(?:\.\d+)?)",
         r"=\s*(-?\d+(?:\.\d+)?)\s*$",
         r"\\boxed\{(-?\d+(?:\.\d+)?)}",
-        r"(\d+(?:\.\d+)?)\s*$",
+        r"(-?\d{1,3}(?:,\d{3})*(?:\.\d+)?|-?\d+(?:\.\d+)?)\s*$",
     ]
     for pattern in patterns:
         match = re.search(pattern, response, re.IGNORECASE | re.MULTILINE)
         if match:
-            return match.group(1)
+            return match.group(1).replace(",", "")
     return None
 
 def math_reward(response: str, ground_truth: str) -> float:
@@ -22,11 +23,11 @@ def math_reward(response: str, ground_truth: str) -> float:
     if answer is None:
         return -1.0
     try:
-        if abs(float(answer) - float(ground_truth)) < 1e-6:
+        if abs(float(answer) - float(ground_truth.replace(",", ""))) < 1e-6:
             return 1.0
     except ValueError:
         pass
-    if answer.strip() == ground_truth.strip():
+    if answer.strip() == ground_truth.replace(",", "").strip():
         return 1.0
     return -0.5
 
