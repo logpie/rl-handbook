@@ -36,7 +36,7 @@ def train(
     use_thinking_reward: bool = False,
     log_interval: int = 5,
     wandb_project: str = "rl-handbook",
-    model_name: str = "Qwen/Qwen3-8B",
+    model_name: str = "alexchen4ai/Qwen3-8B-Instruct",
 ):
     print("=== GRPO Training on RTX 3090 ===")
     print(f"Steps: {num_steps}, G: {G}, LR: {lr}")
@@ -125,8 +125,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model-name",
         type=str,
-        default="Qwen/Qwen3-8B",
-        help="Base model to load (e.g., Qwen/Qwen3-8B or alexchen4ai/Qwen3-8B-Instruct)",
+        default="alexchen4ai/Qwen3-8B-Instruct",
+        help="Base model to load (e.g., alexchen4ai/Qwen3-8B-Instruct or Qwen/Qwen3-8B)",
     )
     args = parser.parse_args()
 
